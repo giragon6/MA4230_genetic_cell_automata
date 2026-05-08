@@ -13,6 +13,31 @@ to go-draw
   ]
 end
 
+; reports allele-dec as a binary string
+to-report decimal-to-binary [decimal-number]
+  let binstring ""
+  let quot decimal-number
+  while [quot != 0] [
+    set binstring word binstring (remainder quot 2)
+    set quot floor (quot / 2)
+  ]
+  set binstring reverse binstring
+  report binstring
+end
+
+; reports binary string as decimal
+to-report binary-to-decimal [binary-string]
+  let multiplier 1
+  let total 0
+  let binstring binary-string
+  while [not empty? binstring] [
+    set total total + (read-from-string last binstring) * multiplier
+    set binstring but-last binstring
+    set multiplier multiplier * 2
+  ]
+  report total
+end
+
 to-report who-to-be
   let alleles (list allele-dec) 
   let my-neighbors []
@@ -45,6 +70,9 @@ to-report inherit-test-2 [ my-neighbors alleles ]
   ; TODO: implement this
   report (list pcolor allele-dec) 
 end
+
+; to-report inherit-neighbor-piecewise [ my-neighbors alleles ]
+; end
   
 to step
   ask patches [
