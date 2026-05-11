@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <model version="NetLogo 7.0.3" snapToGrid="true">
-  <code><![CDATA[patches-own [allele-dec]
+  <code><![CDATA[; lists containing the # neighbors at which current patch is born/dies
+patches-own [birth-n death-n]
 
 to go-draw
     if mouse-down? [
@@ -13,40 +14,53 @@ to go-draw
   ]
 end
 
-<<<<<<< Updated upstream
-=======
-; reports decimal as a binary string
-to-report decimal-to-binary [decimal-number]
-  let binstring ""
-  let quot decimal-number
-  while [quot != 0] [
-    set binstring word binstring (remainder quot 2)
-    set quot floor (quot / 2)
+; ; reports allele-dec as a binary string
+; to-report decimal-to-binary [decimal-number]
+;   let binstring ""
+;   let quot decimal-number
+;   while [quot != 0] [
+;     set binstring word binstring (remainder quot 2)
+;     set quot floor (quot / 2)
+;   ]
+;   set binstring reverse binstring
+;   report binstring
+; end
+
+; ; reports binary string as decimal
+; to-report binary-to-decimal [binary-string]
+;   let multiplier 1
+;   let total 0
+;   let binstring binary-string
+;   while [not empty? binstring] [
+;     set total total + (read-from-string last binstring) * multiplier
+;     set binstring but-last binstring
+;     set multiplier multiplier * 2
+;   ]
+;   report total
+; end
+
+to-report patch-col-as-num [col]
+  ifelse col = white [
+    report 1
+  ] [
+    report 0
   ]
-  set binstring reverse binstring
-  report binstring
 end
 
-; reports binary string as decimal
-to-report binary-to-decimal [binary-string]
-  let multiplier 1
-  let total 0
-  let binstring binary-string
-  while [not empty? binstring] [
-    set total total + (read-from-string last binstring) * multiplier
-    set binstring but-last binstring
-    set multiplier multiplier * 2
-  ]
-  report total
+to-report in-list [ele ls]
+  let is-in-list false
+  foreach ls [ le -> if le = ele [set is-in-list true] ]
+  report is-in-list
+end
+ 
+to-report sum-of-neighbors [the-neighbors]
+  let colorlist map [ n -> patch-col-as-num ([pcolor] of n) ] the-neighbors
+  report sum colorlist
 end
 
-to-report neighbors-to-binary-string [the-neighbors]
-  report map the-neighbors (ifelse [pcolor = white] [report 1] [report 0])
-end
-
->>>>>>> Stashed changes
 to-report who-to-be
-  let alleles (list allele-dec) 
+  let birth-ns (list birth-n)
+  let death-ns (list death-n)
   let my-neighbors []
   let neighbor-points []
   
@@ -56,95 +70,115 @@ to-report who-to-be
   
   foreach my-neighbors [ neighbor ->
     ; Add to alleles list. Repeats for all nieghbors to create list of either 5 or 9 alleles total 
-    ask neighbor [ set alleles lput allele-dec alleles ]
+    ask neighbor [ set birth-ns lput birth-n birth-ns ]
+    ask neighbor [ set birth-ns lput death-n death-ns ]
   ]
   
-  ifelse inheritance-rule = "TEST#2" [
-    report inherit-test-2 my-neighbors alleles
+  ifelse inheritance-rule = "type2" [
+    report inherit-test-2 my-neighbors birth-ns death-ns
   ] [
     ; default to random neighbor inheritance
     report inherit-random-neighbor my-neighbors
   ]
 end
 
-; returns ( color-to-be allele-to-have )
+; reports 1 if cell should be alive and 0 if cell should be dead
+; if neighbor sum in birth numbers and death numbers then returns current status (no change)
+to-report evaluate-rules [my-neighbors my-status bns dns]
+  let nsum (sum-of-neighbors my-neighbors) + my-status
+  let my-new-status my-status
+  let should-birth in-list nsum bns
+  let should-die in-list nsum dns
+  
+  (ifelse
+    should-birth and not should-die [
+      set my-new-status 1
+    ]
+    should-die and not should-birth [
+      set my-new-status 0
+    ]
+  )
+  
+  report my-new-status
+end
+
+;reports random (birth-n death-n)
+to-report rand-birth-death-ns
+  let bns []
+  let dns []
+  foreach range 10 [ n ->
+    let rand random 3
+    (ifelse 
+      rand = 1 [
+        set bns lput n bns
+      ]
+      rand = 2 [
+        set dns lput n dns
+      ]
+     )
+  ]
+  
+  report (list bns dns)
+end
+
+; returns ( color-to-be birth-n-to-have death-n-to-have )
 to-report inherit-random-neighbor [ my-neighbors ]
   let rand-neighbor one-of my-neighbors
-  report (list ([pcolor] of rand-neighbor) ([allele-dec] of rand-neighbor))
+  report (list ([pcolor] of rand-neighbor) ([birth-n] of rand-neighbor) ([death-n] of rand-neighbor))
 end
 
-to-report inherit-test-2 [ my-neighbors alleles ]
+to-report inherit-test-2 [ my-neighbors birth-ns death-ns ]
   ; TODO: implement this
-  report (list pcolor allele-dec) 
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-ns death-ns
+  report (list new-status birth-n death-n) 
 end
-<<<<<<< Updated upstream
-=======
 
-to-report inherit-neighbor-piecewise [ my-neighbors alleles ]
-  let comboallele ""
-  let counter 0
-  ; take a piece from everyone
-  foreach (alleles) [ allele -> 
-    let comboallele word comboallele item counter allele
-  ]
-end
->>>>>>> Stashed changes
+; to-report inherit-neighbor-piecewise [ my-neighbors alleles ]
+; end
   
 to step
   ask patches [
     let color-and-allele who-to-be
     set pcolor item 0 color-and-allele
-    set allele-dec item 1 color-and-allele
+    set birth-n item 1 color-and-allele
+    set death-n item 2 color-and-allele
   ]
 end
 
 
 to blackscreen
+  let bns-dns [[] []]
   ask patches [
     set pcolor black
-    set allele-dec random 32
+    set bns-dns rand-birth-death-ns
+    set birth-n item 0 bns-dns
+    set death-n item 1 bns-dns
   ]
-  
 end
 
 to whitescreen
+  let bns-dns [[] []]
   ask patches [
     set pcolor white
-    set allele-dec random 32
+    set bns-dns rand-birth-death-ns
+    set birth-n item 0 bns-dns
+    set death-n item 1 bns-dns
   ]
-  
 end
 
 to draw-center-spread
-  ask patches [set pcolor black
-    set allele-dec 0]
-  ask patches with [pxcor = 0 and pycor = 0] [
-  set pcolor white
-  set allele-dec random 32
-    ask neighbors [
+  let CENTER-SPREAD-SIZE 6
+  ask patches [
+    set pcolor black
+    set birth-n []
+    set death-n range 10
+  ]
+  let bns-dns [[] []]
+  ask patches with [pxcor > -1 * CENTER-SPREAD-SIZE and pxcor < CENTER-SPREAD-SIZE and pycor > -1 * CENTER-SPREAD-SIZE and pycor < CENTER-SPREAD-SIZE] [
     set pcolor white
-    set allele-dec random 32
-    ask neighbors [
-    set pcolor white
-    set allele-dec random 32
-    ask neighbors [
-    set pcolor white
-    set allele-dec random 32
-    ask neighbors [
-    set pcolor white
-    set allele-dec random 32
-    ask neighbors [
-    set pcolor white
-    set allele-dec random 32
-    ask neighbors [
-    set pcolor white
-    set allele-dec random 32
-          ]
-    ]
-          ]
-    ]
-    ]
-    ]
+    set bns-dns rand-birth-death-ns
+    set birth-n item 0 bns-dns
+    set death-n item 1 bns-dns
   ]
 end]]></code>
   <widgets>
@@ -154,7 +188,7 @@ end]]></code>
       <choice type="string" value="neighbors4"></choice>
       <choice type="string" value="neighbors"></choice>
     </chooser>
-    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="0" width="250" display="inheritance-rule">
+    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="1" width="250" display="inheritance-rule">
       <choice type="string" value="random-neighbor"></choice>
       <choice type="string" value="type2"></choice>
     </chooser>
