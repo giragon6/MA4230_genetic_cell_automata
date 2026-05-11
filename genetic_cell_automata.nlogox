@@ -47,9 +47,51 @@ to-report who-to-be
     
   foreach neighbor-points [ pt -> set my-neighbors lput patch-at item 0 pt item 1 pt my-neighbors ]
   
+<<<<<<< Updated upstream:genetic_cell_automata.nlogox
   foreach my-neighbors [ neighbor ->
     ; Add to alleles list. Repeats for all nieghbors to create list of either 5 or 9 alleles total 
     ask neighbor [ set alleles lput allele-dec alleles ]
+=======
+  ask patches [
+  let colorneeded pcolor
+  
+  let my-neighbors neighbors4
+  ifelse neighbor-type = "neighbors4" [set my-neighbors neighbors4][set my-neighbors neighbors]
+  
+      ask one-of my-neighbors [set colorneeded pcolor]
+    ifelse colorneeded = white
+    [set pcolor white] [set pcolor black]
+  ]]
+ 
+  
+  
+  if inheritance-rule = "TEST#2" [
+    ask patches [
+    let alleles (list allele-dec)
+    let my-neighbors neighbors4
+    ifelse neighbor-type = "neighbors4" [set my-neighbors neighbors4][set my-neighbors neighbors]
+      
+      ask my-neighbors [
+        ; Add to alleles list. Repeats for all nieghbors to create list of either 5 or 9 alleles total
+        set alleles lput allele-dec alleles
+      
+      ]
+    ]
+  ]
+  
+  if inheritance-rule = "TEST#2" [
+    ask patches [
+    let alleles (list allele-dec)
+    let my-neighbors neighbors4
+    ifelse neighbor-type = "neighbors4" [set my-neighbors neighbors4][set my-neighbors neighbors]
+      
+      ask my-neighbors [
+        ; Add to alleles list. Repeats for all nieghbors to create list of either 5 or 9 alleles total
+        set alleles lput allele-dec alleles
+      
+      ]
+    ]
+>>>>>>> Stashed changes:genetic_cell_automota.nlogox
   ]
   
   ifelse inheritance-rule = "TEST#2" [
