@@ -132,9 +132,6 @@ to-report inherit-test-2 [ my-neighbors birth-ns death-ns ]
   let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-ns death-ns
   report (list new-status birth-n death-n) 
 end
-
-; to-report inherit-neighbor-piecewise [ my-neighbors alleles ]
-; end
   
 to step
   ask patches [
