@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <model version="NetLogo 7.0.3" snapToGrid="true">
   <code><![CDATA[; lists containing the # neighbors at which current patch is born/dies
-patches-own [birth-n death-n]
+patches-own [birth-n death-n allele-dec]
+globals [shown-alleles]
+
+to show-alleles
+  ifelse shown-alleles = true [
+  ask patches [
+    set plabel-color green
+    set plabel "" 
+    set shown-alleles false]
+  ][
+  ask patches [
+    set plabel-color green - allele-dec / 2 + 25
+    set plabel allele-dec
+   set shown-alleles true ]
+  ]
+end
 
 to go-draw
     if mouse-down? [
@@ -140,6 +155,7 @@ to step
     set birth-n item 1 color-and-allele
     set death-n item 2 color-and-allele
   ]
+  tick
 end
 
 
@@ -177,6 +193,15 @@ to draw-center-spread
     set birth-n item 0 bns-dns
     set death-n item 1 bns-dns
   ]
+end
+
+to draw-percent
+  ask patches [
+    set allele-dec random 32
+    set pcolor black
+    if random 100 < percent [set pcolor white]
+  
+  ]
 end]]></code>
   <widgets>
     <view x="368" wrappingAllowedX="true" y="10" frameRate="30.0" minPycor="-32" height="394" showTickCounter="true" patchSize="6.0" fontSize="10" wrappingAllowedY="true" width="394" tickCounterLabel="ticks" maxPycor="32" updateMode="0" maxPxcor="32" minPxcor="-32"></view>
@@ -197,6 +222,9 @@ end]]></code>
     <note x="60" y="185" backgroundDark="0" fontSize="12" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Model Properties</note>
     <note x="60" y="120" backgroundDark="0" fontSize="12" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Run Model</note>
     <note x="60" y="5" backgroundDark="0" fontSize="12" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Draw initial conditions</note>
+    <button x="155" y="70" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="90">draw-percent</button>
+    <input x="250" multiline="false" y="70" height="60" variable="Percent" type="number" width="100">0.0</input>
+    <button x="70" y="340" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">show-alleles</button>
   </widgets>
   <info>## WHAT IS IT?
 
