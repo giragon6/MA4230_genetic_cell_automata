@@ -4,55 +4,14 @@
 patches-own [birth-n death-n allele-dec]
 globals [shown-alleles]
 
-to show-alleles
-  ifelse shown-alleles = true [
-  ask patches [
-    set plabel-color green
-    set plabel "" 
-    set shown-alleles false]
-  ][
-  ask patches [
-    set plabel-color green - allele-dec / 2 + 25
-    set plabel allele-dec
-   set shown-alleles true ]
-  ]
-end
+; ex. birth-n could be [1 0 3] (if cell is off, it turns on if it has 0, 1, or 3 on neighbors),
+; death-n could be [5 6 2 8] (if cell is on, it turns off if it has 5, 6, 2, or 8 on neighbors)
+; if the cell has 4 or 7 neighbors, it doesn't change (stays on if it's on, stays off if it's off)
 
-to go-draw
-    if mouse-down? [
-    let clicked-patch patch mouse-xcor mouse-ycor
-    if clicked-patch != nobody [
-      ask clicked-patch [
-        set pcolor white
-      ]
-    ]
-  ]
-end
+; ------------ UTILS ------------
 
-; ; reports allele-dec as a binary string
-; to-report decimal-to-binary [decimal-number]
-;   let binstring ""
-;   let quot decimal-number
-;   while [quot != 0] [
-;     set binstring word binstring (remainder quot 2)
-;     set quot floor (quot / 2)
-;   ]
-;   set binstring reverse binstring
-;   report binstring
-; end
-
-; ; reports binary string as decimal
-; to-report binary-to-decimal [binary-string]
-;   let multiplier 1
-;   let total 0
-;   let binstring binary-string
-;   while [not empty? binstring] [
-;     set total total + (read-from-string last binstring) * multipliertrying
-;     set binstring but-last binstring
-;     set multiplier multiplier * 2
-;   ]
-;   report total
-; end
+; TRINARY
+; {
 
 ; reports (birth-n death-n) as trinary string
 to-report bns-dns-to-trinary [bns dns]
@@ -105,6 +64,11 @@ to-report trinary-to-decimal [trinary-string]
   report total
 end
 
+; }
+
+; PATCH <-> COLOR 
+; {
+
 to-report patch-col-as-num [col]
   ifelse col = white [
     report 1
@@ -121,43 +85,10 @@ to-report patch-num-as-col [num]
   ]
 end
 
-to-report in-list [ele ls]
-  let is-in-list false
-  foreach ls [ le -> if le = ele [set is-in-list true] ]
-  report is-in-list
-end
- 
-to-report sum-of-neighbors [the-neighbors]
-  let colorlist map [ n -> patch-col-as-num ([pcolor] of n) ] the-neighbors
-  report sum colorlist
-end
-
-to-report who-to-be
-  let birth-ns []
-  let death-ns []
-  let my-neighbors []
-  let neighbor-points []
-  
-  ifelse neighbor-type = "neighbors" [set neighbor-points (list [0 -1] [1 -1] [1 0] [1 1] [0 1] [-1 1] [-1 0] [-1 -1])] [set neighbor-points (list [0 -1] [1 0] [0 1] [-1 0])]
-    
-  foreach neighbor-points [ pt -> set my-neighbors lput patch-at item 0 pt item 1 pt my-neighbors ]
-  
-  foreach my-neighbors [ neighbor ->
-    ; Add to alleles list. Repeats for all nieghbors to create list of either 4 or 8 alleles total 
-    ask neighbor [ set birth-ns lput birth-n birth-ns ]
-    ask neighbor [ set birth-ns lput death-n death-ns ]
-  ]
-  
-  ifelse inheritance-rule = "no-inherit" [
-    report inherit-no-inherit my-neighbors birth-ns death-ns
-  ] [
-    ; default to random neighbor inheritance
-    report inherit-random-neighbor my-neighbors
-  ]
-end
+; }
 
 ; reports 1 if cell should be alive and 0 if cell should be dead
-; if neighbor sum in birth numbers and death numbers then returns current status (no change)
+; if neighbor sum in birth numbers and death numbers then returns current status (no change) (but this shouldn't happen)
 to-report evaluate-rules [my-neighbors my-status bns dns]
   let nsum (sum-of-neighbors my-neighbors)
   let my-new-status my-status
@@ -195,6 +126,77 @@ to-report rand-birth-death-ns
   report (list bns dns)
 end
 
+to-report sum-of-neighbors [the-neighbors]
+  let colorlist map [ n -> patch-col-as-num ([pcolor] of n) ] the-neighbors
+  report sum colorlist
+end
+
+to-report in-list [ele ls]
+  let is-in-list false
+  foreach ls [ le -> if le = ele [set is-in-list true] ]
+  report is-in-list
+end
+ 
+
+
+; ------------ INHERITANCE ------------
+
+; to add inheritance rule:
+; 1. write reporter that reports ( color birth-n death-n ) for the current cell after it undergoes the inheritance rule
+; 2. add reporter function to the switch (if-else) statement in who-to-be
+; 3. add inheritance rule to the dropdown in the ui with the exact text you put in the switch statement
+
+to-report who-to-be
+  let birth-ns []
+  let death-ns []
+  let my-neighbors []
+  let neighbor-points []
+  
+  ; X = current cell
+  
+  ; neighbors: 
+  ; 8 1 2
+  ; 7 X 3
+  ; 6 5 4
+  
+  ; neighbors-4
+  ;   1
+  ; 4 X 2
+  ;   3
+  
+  ; ex. to access neighbor #4: item 3 my-neighbors
+  ; note that you access neighbor i via index i-1 (0-indexing); the 1st neighbor neighbor #1 is at index 0
+  
+  
+  ifelse neighbor-type = "neighbors" [set neighbor-points (list [0 -1] [1 -1] [1 0] [1 1] [0 1] [-1 1] [-1 0] [-1 -1])] [set neighbor-points (list [0 -1] [1 0] [0 1] [-1 0])]
+    
+  foreach neighbor-points [ pt -> set my-neighbors lput patch-at item 0 pt item 1 pt my-neighbors ]
+  
+  foreach my-neighbors [ neighbor ->
+    ; Add to alleles list. Repeats for all nieghbors to create list of either 4 or 8 alleles total 
+    ask neighbor [ set birth-ns lput birth-n birth-ns ]
+    ask neighbor [ set birth-ns lput death-n death-ns ]
+  ]
+  
+  ; ADD INHERITANCE RULES BELOW IN FORMAT
+  ;   inheritance-rule = "{my inheritance rule name}" [
+  ;       report inherit-{my inheritance rule name} {the data my inheritance rule needs, usually my-neighbors birth-ns death-ns}
+  ;   ] 
+  
+  (ifelse 
+    inheritance-rule = "no-inherit" [
+      report inherit-no-inherit my-neighbors birth-ns death-ns
+    ] 
+    [
+      ; default to random neighbor inheritance
+      report inherit-random-neighbor my-neighbors
+    ]
+  )
+end
+
+; ADD INHERITANCE RULE REPORTER FUNCTIONS BELOW
+; name format: inherit-{my inheritance rule name}
+
 ; returns ( color-to-be birth-n-to-have death-n-to-have )
 to-report inherit-random-neighbor [ my-neighbors ]
   let rand-neighbor one-of my-neighbors
@@ -203,9 +205,13 @@ end
 
 to-report inherit-no-inherit [ my-neighbors birth-ns death-ns ]
   ; TODO: implement this
-  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n ; evaluate according to conway's rules (do before inheritance stuff)
   report (list (patch-num-as-col new-status) birth-n death-n) 
 end
+
+
+
+; ------------ BUTTONS ------------
 
 to setup
   reset-ticks
@@ -221,7 +227,6 @@ to step
   ]
   tick
 end
-
 
 to blackscreen
   let bns-dns [[] []]
@@ -272,6 +277,31 @@ to draw-percent
     set death-n item 1 bns-dns
     set allele-dec trinary-to-decimal bns-dns-to-trinary birth-n death-n
     if random 100 < percent [set pcolor white]
+  ]
+end
+
+to show-alleles
+  ifelse shown-alleles = true [
+  ask patches [
+    set plabel-color green
+    set plabel "" 
+    set shown-alleles false]
+  ][
+  ask patches [
+    set plabel-color green - allele-dec / 2 + 25
+    set plabel allele-dec
+   set shown-alleles true ]
+  ]
+end
+
+to go-draw
+    if mouse-down? [
+    let clicked-patch patch mouse-xcor mouse-ycor
+    if clicked-patch != nobody [
+      ask clicked-patch [
+        set pcolor white
+      ]
+    ]
   ]
 end]]></code>
   <widgets>
