@@ -39,11 +39,70 @@ end
 ;   report total
 ; end
 
+; reports (birth-n death-n) as trinary string
+to-report bns-dns-to-trinary [bns dns]
+  let tristring "00000"
+  if neighbor-type = "neighbors" [ set tristring "000000000" ]
+  foreach bns [ bn -> set tristring replace-item bn tristring "1" ]
+  foreach dns [ dn -> set tristring replace-item dn tristring "2" ]
+  report tristring
+end
+
+; reports trinary string as (birth-n death-n)
+to-report trinary-to-bns-dns [tristring]
+  let bns []
+  let dns []
+  foreach range length tristring [ i -> 
+    (ifelse 
+      item i tristring = 1 [
+        set bns lput i bns
+      ]
+      item i tristring = 2 [
+        set dns lput i dns
+      ]
+    )
+  ]
+  report (list bns dns)
+end
+
+; reports decimal number as a trinary string
+to-report decimal-to-trinary [decimal-number]
+  let tristring ""
+  let quot decimal-number
+  while [quot != 0] [
+    set tristring word tristring (remainder quot 3)
+    set quot floor (quot / 3)
+  ]
+  set tristring reverse tristring
+  report tristring
+end
+
+; reports trinary string as decimal number
+to-report trinary-to-decimal [trinary-string]
+  let multiplier 1
+  let total 0
+  let tristring trinary-string
+  while [not empty? tristring] [
+    set total total + (read-from-string last tristring) * multiplier
+    set tristring but-last tristring
+    set multiplier multiplier * 3
+  ]
+  report total
+end
+
 to-report patch-col-as-num [col]
   ifelse col = white [
     report 1
   ] [
     report 0
+  ]
+end
+
+to-report patch-num-as-col [num]
+  ifelse num = 1 [
+    report white
+  ] [
+    report black
   ]
 end
 
@@ -59,8 +118,8 @@ to-report sum-of-neighbors [the-neighbors]
 end
 
 to-report who-to-be
-  let birth-ns (list birth-n)
-  let death-ns (list death-n)
+  let birth-ns []
+  let death-ns []
   let my-neighbors []
   let neighbor-points []
   
@@ -69,7 +128,7 @@ to-report who-to-be
   foreach neighbor-points [ pt -> set my-neighbors lput patch-at item 0 pt item 1 pt my-neighbors ]
   
   foreach my-neighbors [ neighbor ->
-    ; Add to alleles list. Repeats for all nieghbors to create list of either 5 or 9 alleles total 
+    ; Add to alleles list. Repeats for all nieghbors to create list of either 4 or 8 alleles total 
     ask neighbor [ set birth-ns lput birth-n birth-ns ]
     ask neighbor [ set birth-ns lput death-n death-ns ]
   ]
@@ -130,7 +189,7 @@ end
 to-report inherit-test-2 [ my-neighbors birth-ns death-ns ]
   ; TODO: implement this
   let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-ns death-ns
-  report (list new-status birth-n death-n) 
+  report (list (patch-num-as-col new-status) birth-n death-n) 
 end
   
 to step
