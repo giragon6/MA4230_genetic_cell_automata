@@ -193,13 +193,16 @@ to-report who-to-be
   
   (ifelse 
     inheritance-rule = "no-inherit" [
-      report inherit-no-inherit my-neighbors birth-ns death-ns
+      report inherit-no-inherit my-neighbors
     ] 
     inheritance-rule = "random-bit" [
       report inherit-random-bit my-neighbors
     ]
     inheritance-rule = "clockwise" [
       report inherit-clockwise my-neighbors
+    ]
+    inheritance-rule = "random-parents" [
+      report inherit-random-parents my-neighbors
     ]
     [
       ; default to random neighbor inheritance
@@ -217,8 +220,7 @@ to-report inherit-random-neighbor [ my-neighbors ]
   report (list ([pcolor] of rand-neighbor) ([birth-n] of rand-neighbor) ([death-n] of rand-neighbor))
 end
 
-to-report inherit-no-inherit [ my-neighbors birth-ns death-ns ]
-  ; TODO: implement this
+to-report inherit-no-inherit [ my-neighbors ]
   let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n ; evaluate according to conway's rules (do before inheritance stuff)
   report (list (patch-num-as-col new-status) birth-n death-n) 
 end
@@ -246,6 +248,22 @@ to-report inherit-clockwise [ my-neighbors ]
   ; my-neighbors already in clockwise order
   foreach range length my-neighbors [ i ->
     set new-allele word new-allele item i pad-to-length allele-length decimal-to-trinary [allele-dec] of item i my-neighbors
+  ]
+  let new-bns-dns trinary-to-bns-dns new-allele
+  
+  report (list (patch-num-as-col new-status) (item 0 new-bns-dns) (item 1 new-bns-dns))
+end
+
+to-report inherit-random-parents [ my-neighbors ]
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+  
+  let allele-length 5
+  if neighbor-type = "neighbors" [ set allele-length 9 ]
+  let new-allele ""
+  let rand-parents (list one-of my-neighbors one-of my-neighbors) 
+  ; for each digit, choose one of the two parents to take it from randomly
+  foreach range allele-length [ i ->
+    set new-allele word new-allele item i pad-to-length allele-length decimal-to-trinary [allele-dec] of item random 2 rand-parents
   ]
   let new-bns-dns trinary-to-bns-dns new-allele
   
@@ -357,6 +375,7 @@ end]]></code>
       <choice type="string" value="no-inherit"></choice>
       <choice type="string" value="random-bit"></choice>
       <choice type="string" value="clockwise"></choice>
+      <choice type="string" value="random-parents"></choice>
     </chooser>
     <button x="155" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="80">whitescreen</button>
     <button x="240" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">draw-center-spread</button>
