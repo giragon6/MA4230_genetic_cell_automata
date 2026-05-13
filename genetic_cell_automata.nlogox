@@ -198,6 +198,9 @@ to-report who-to-be
     inheritance-rule = "random-bit" [
       report inherit-random-bit my-neighbors
     ]
+    inheritance-rule = "clockwise" [
+      report inherit-clockwise my-neighbors
+    ]
     [
       ; default to random neighbor inheritance
       report inherit-random-neighbor my-neighbors
@@ -228,6 +231,21 @@ to-report inherit-random-bit [ my-neighbors ]
   let new-allele ""
   foreach range allele-length [ i ->
     set new-allele word new-allele item i pad-to-length allele-length decimal-to-trinary [allele-dec] of one-of my-neighbors
+  ]
+  let new-bns-dns trinary-to-bns-dns new-allele
+  
+  report (list (patch-num-as-col new-status) (item 0 new-bns-dns) (item 1 new-bns-dns))
+end
+
+to-report inherit-clockwise [ my-neighbors ]
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+  
+  let allele-length 5
+  if neighbor-type = "neighbors" [ set allele-length 9 ]
+  let new-allele item 0 decimal-to-trinary allele-dec
+  ; my-neighbors already in clockwise order
+  foreach range length my-neighbors [ i ->
+    set new-allele word new-allele item i pad-to-length allele-length decimal-to-trinary [allele-dec] of item i my-neighbors
   ]
   let new-bns-dns trinary-to-bns-dns new-allele
   
@@ -334,10 +352,11 @@ end]]></code>
       <choice type="string" value="neighbors4"></choice>
       <choice type="string" value="neighbors"></choice>
     </chooser>
-    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="2" width="250" display="inheritance-rule">
+    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="3" width="250" display="inheritance-rule">
       <choice type="string" value="random-neighbor"></choice>
       <choice type="string" value="no-inherit"></choice>
       <choice type="string" value="random-bit"></choice>
+      <choice type="string" value="clockwise"></choice>
     </chooser>
     <button x="155" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="80">whitescreen</button>
     <button x="240" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">draw-center-spread</button>
