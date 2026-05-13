@@ -95,6 +95,15 @@ end
 
 ; }
 
+to-report neither-n-from-bns-dns [bns dns]
+  let allele-length 5
+  if neighbor-type = "neighbors" [ set allele-length 9 ]
+  let nns range allele-length
+  foreach bns [ bn -> set nns remove bn nns ]
+  foreach dns [ dn -> set nns remove dn nns ]
+  report nns
+end  
+
 ; reports 1 if cell should be alive and 0 if cell should be dead
 ; if neighbor sum in birth numbers and death numbers then returns current status (no change) (but this shouldn't happen)
 to-report evaluate-rules [my-neighbors my-status bns dns]
@@ -306,6 +315,7 @@ to step
     set death-n item 2 color-and-allele
     set allele-dec trinary-to-decimal bns-dns-to-trinary birth-n death-n
   ]
+  plot-gen-div
   tick
 end
 
@@ -386,6 +396,35 @@ to go-draw
       ]
     ]
   ]
+end
+
+
+to plot-gen-div
+  let all-bns []
+  let all-dns []
+  let all-nns []
+  
+  ask patches [
+    set all-bns sentence all-bns birth-n
+    set all-dns sentence all-dns death-n
+    set all-nns sentence all-nns neither-n-from-bns-dns birth-n death-n
+  ]
+  
+  let allele-length 5
+  if neighbor-type = "neighbors" [ set allele-length 9 ]
+  
+  set-current-plot "birth numbers"
+  set-plot-x-range 0 allele-length 
+  histogram all-bns
+
+  
+  set-current-plot "death numbers"
+  set-plot-x-range 0 allele-length
+  histogram all-dns
+  
+  set-current-plot "neither numbers"
+  set-plot-x-range 0 allele-length
+  histogram all-nns
 end]]></code>
   <widgets>
     <view x="368" wrappingAllowedX="true" y="10" frameRate="30.0" minPycor="-32" height="394" showTickCounter="true" patchSize="6.0" fontSize="10" wrappingAllowedY="true" width="394" tickCounterLabel="ticks" maxPycor="32" updateMode="0" maxPxcor="32" minPxcor="-32"></view>
@@ -414,6 +453,30 @@ end]]></code>
     <input x="250" multiline="false" y="70" height="60" variable="Percent" type="number" width="100">0.0</input>
     <button x="70" y="340" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">show-alleles</button>
     <button x="145" y="410" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>
+    <plot x="810" autoPlotX="true" yMax="10.0" autoPlotY="true" y="35" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" display="birth numbers">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="1" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update></update>
+      </pen>
+    </plot>
+    <plot x="810" autoPlotX="true" yMax="10.0" autoPlotY="true" y="240" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" display="death numbers">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="1" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update></update>
+      </pen>
+    </plot>
+    <plot x="810" autoPlotX="true" yMax="10.0" autoPlotY="true" y="445" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" display="neither numbers">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="1" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update></update>
+      </pen>
+    </plot>
   </widgets>
   <info>## WHAT IS IT?
 
