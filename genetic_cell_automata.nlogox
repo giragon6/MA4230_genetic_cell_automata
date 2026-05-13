@@ -28,10 +28,10 @@ to-report trinary-to-bns-dns [tristring]
   let dns []
   foreach range length tristring [ i -> 
     (ifelse 
-      item i tristring = 1 [
+      item i tristring = "1" [
         set bns lput i bns
       ]
-      item i tristring = 2 [
+      item i tristring = "2" [
         set dns lput i dns
       ]
     )
@@ -64,6 +64,14 @@ to-report trinary-to-decimal [trinary-string]
   report total
 end
 
+; adds 0s to start of str until length str = len and reports new str
+to-report pad-to-length [len str]
+  let new-str str
+  while [len > length new-str] [
+    set new-str word "0" new-str
+  ]
+  report new-str
+end
 ; }
 
 ; PATCH <-> COLOR 
@@ -122,7 +130,7 @@ to-report rand-birth-death-ns
       ]
      )
   ]
-  
+   
   report (list bns dns)
 end
 
@@ -187,6 +195,9 @@ to-report who-to-be
     inheritance-rule = "no-inherit" [
       report inherit-no-inherit my-neighbors birth-ns death-ns
     ] 
+    inheritance-rule = "random-bit" [
+      report inherit-random-bit my-neighbors
+    ]
     [
       ; default to random neighbor inheritance
       report inherit-random-neighbor my-neighbors
@@ -209,7 +220,19 @@ to-report inherit-no-inherit [ my-neighbors birth-ns death-ns ]
   report (list (patch-num-as-col new-status) birth-n death-n) 
 end
 
-
+to-report inherit-random-bit [ my-neighbors ]
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+  
+  let allele-length 5
+  if neighbor-type = "neighbors" [ set allele-length 9 ]
+  let new-allele ""
+  foreach range allele-length [ i ->
+    set new-allele word new-allele item i pad-to-length allele-length decimal-to-trinary [allele-dec] of one-of my-neighbors
+  ]
+  let new-bns-dns trinary-to-bns-dns new-allele
+  
+  report (list (patch-num-as-col new-status) (item 0 new-bns-dns) (item 1 new-bns-dns))
+end
 
 ; ------------ BUTTONS ------------
 
@@ -311,9 +334,10 @@ end]]></code>
       <choice type="string" value="neighbors4"></choice>
       <choice type="string" value="neighbors"></choice>
     </chooser>
-    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="1" width="250" display="inheritance-rule">
+    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="2" width="250" display="inheritance-rule">
       <choice type="string" value="random-neighbor"></choice>
       <choice type="string" value="no-inherit"></choice>
+      <choice type="string" value="random-bit"></choice>
     </chooser>
     <button x="155" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="80">whitescreen</button>
     <button x="240" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">draw-center-spread</button>
