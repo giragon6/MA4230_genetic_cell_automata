@@ -218,6 +218,9 @@ to-report who-to-be
     inheritance-rule = "falling-parents" [
       report inherit-falling-parents my-neighbors
     ]
+    inheritance-rule = "inherit-average" [
+      report inherit-average my-neighbors
+    ]
     [
       ; default to random neighbor inheritance
       report inherit-random-neighbor my-neighbors
@@ -299,6 +302,33 @@ to-report inherit-falling-parents [ my-neighbors ]
   let new-bns-dns trinary-to-bns-dns new-allele
   
   report (list (patch-num-as-col new-status) (item 0 new-bns-dns) (item 1 new-bns-dns))
+end
+
+to-report inherit-average [ my-neighbors ]
+ ; let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+ let allele-length 5
+ if neighbor-type = "neighbors" [ set allele-length 9 ]
+;  let neighbor-alleles []
+  ;foreach range (length my-neighbors) [ i ->
+ ;   set neighbor-alleles lput ([allele-dec] of item i my-neighbors) neighbor-alleles
+ ; ]
+  
+  ;let average mean neighbor-alleles
+  
+  let new-status evaluate-rules my-neighbors (patch-col-as-num pcolor) birth-n death-n
+  let neighbor-alleles []
+  foreach my-neighbors [neighbor -> 
+    set neighbor-alleles lput ([allele-dec] of neighbor) neighbor-alleles
+    ;print [allele-dec] of neighbor
+  ]
+  ;print neighbor-alleles
+  let average round(mean neighbor-alleles)
+  ;print "Average: "
+  ;print average
+  let trin pad-to-length allele-length decimal-to-trinary average
+  let new-nums trinary-to-bns-dns trin
+  
+  report (list (patch-num-as-col new-status) (item 0 new-nums) (item 1 new-nums)) 
 end
 
 ; ------------ BUTTONS ------------
@@ -429,17 +459,18 @@ end]]></code>
   <widgets>
     <view x="368" wrappingAllowedX="true" y="10" frameRate="30.0" minPycor="-32" height="394" showTickCounter="true" patchSize="6.0" fontSize="10" wrappingAllowedY="true" width="394" tickCounterLabel="ticks" maxPycor="32" updateMode="0" maxPxcor="32" minPxcor="-32"></view>
     <button x="70" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="81">blackscreen</button>
-    <chooser x="70" y="275" height="60" variable="neighbor-type" current="0" width="250" display="neighbor-type">
+    <chooser x="70" y="275" height="60" variable="neighbor-type" current="1" width="250" display="neighbor-type">
       <choice type="string" value="neighbors4"></choice>
       <choice type="string" value="neighbors"></choice>
     </chooser>
-    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="5" width="250" display="inheritance-rule">
+    <chooser x="70" y="205" height="60" variable="inheritance-rule" current="6" width="250" display="inheritance-rule">
       <choice type="string" value="random-neighbor"></choice>
       <choice type="string" value="no-inherit"></choice>
       <choice type="string" value="random-bit"></choice>
       <choice type="string" value="clockwise"></choice>
       <choice type="string" value="random-parents"></choice>
       <choice type="string" value="falling-parents"></choice>
+      <choice type="string" value="inherit-average"></choice>
     </chooser>
     <button x="155" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="80">whitescreen</button>
     <button x="240" y="25" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">draw-center-spread</button>
@@ -450,7 +481,7 @@ end]]></code>
     <note x="60" y="120" backgroundDark="0" fontSize="12" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Run Model</note>
     <note x="60" y="5" backgroundDark="0" fontSize="12" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Draw initial conditions</note>
     <button x="155" y="70" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="90">draw-percent</button>
-    <input x="250" multiline="false" y="70" height="60" variable="Percent" type="number" width="100">0.0</input>
+    <input x="250" multiline="false" y="70" height="60" variable="Percent" type="number" width="100">50.0</input>
     <button x="70" y="340" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="120">show-alleles</button>
     <button x="145" y="410" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>
     <plot x="810" autoPlotX="true" yMax="10.0" autoPlotY="true" y="35" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" display="birth numbers">
@@ -477,6 +508,7 @@ end]]></code>
         <update></update>
       </pen>
     </plot>
+    <monitor x="205" precision="17" y="340" height="60" fontSize="11" width="100">count patches with [pcolor = white] * 100 / count patches</monitor>
   </widgets>
   <info>## WHAT IS IT?
 
