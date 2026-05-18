@@ -332,10 +332,6 @@ to-report inherit-average [ my-neighbors ]
 end
 
 ; ------------ BUTTONS ------------
-
-to setup
-  reset-ticks
-end
   
 to step
   ask patches [
@@ -350,6 +346,7 @@ to step
 end
 
 to blackscreen
+  reset-ticks
   let bns-dns [[] []]
   ask patches [
     set pcolor black
@@ -361,6 +358,7 @@ to blackscreen
 end
 
 to whitescreen
+  reset-ticks
   let bns-dns [[] []]
   ask patches [
     set pcolor white
@@ -372,6 +370,7 @@ to whitescreen
 end
 
 to draw-center-spread
+  reset-ticks
   let CENTER-SPREAD-SIZE 6
   let allele-length 5
   if neighbor-type = "neighbors" [ set allele-length 9 ]
@@ -392,6 +391,7 @@ to draw-center-spread
 end
 
 to draw-percent
+  reset-ticks
   let bns-dns [[] []]
   ask patches [
     set pcolor black
@@ -418,6 +418,7 @@ to show-alleles
 end
 
 to go-draw
+    reset-ticks
     if mouse-down? [
     let clicked-patch patch mouse-xcor mouse-ycor
     if clicked-patch != nobody [
